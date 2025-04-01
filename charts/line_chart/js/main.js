@@ -1,7 +1,3 @@
-/*
-*    main.js
-*/
-
 var margin = { left:80, right:100, top:50, bottom:100 },
     height = 500 - margin.top - margin.bottom, 
     width = 800 - margin.left - margin.right;
@@ -11,8 +7,7 @@ var svg = d3.select("#chart-area").append("svg")
     .attr("height", height + margin.top + margin.bottom);
 
 var g = svg.append("g")
-    .attr("transform", "translate(" + margin.left + 
-        ", " + margin.top + ")");
+    .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
 
 // Time parser for x-scale
 var parseTime = d3.timeParse("%Y");
@@ -24,9 +19,10 @@ var x = d3.scaleTime().range([0, width]);
 var y = d3.scaleLinear().range([height, 0]);
 
 // Axis generators
-var xAxisCall = d3.axisBottom()
+var xAxisCall = d3.axisBottom();
 var yAxisCall = d3.axisLeft()
-    .ticks(6)
+    .ticks(4)
+    .tickValues([770000, 775000, 780000, 785000])
     .tickFormat((d) => { return parseInt(d / 1000) + "k"; });
 
 // Axis groups
@@ -34,7 +30,7 @@ var xAxis = g.append("g")
     .attr("class", "x axis")
     .attr("transform", "translate(0," + height + ")");
 var yAxis = g.append("g")
-    .attr("class", "y axis")
+    .attr("class", "y axis");
     
 // Y-Axis label
 yAxis.append("text")
@@ -44,10 +40,12 @@ yAxis.append("text")
     .attr("dy", ".71em")
     .style("text-anchor", "end")
     .attr("fill", "#5D6971")
-    .text("Population)");
+    .text("Population");
 
 // Line path generator
-// TODO: Implement the line generator
+var line = d3.line()
+    .x(d => x(d.year))
+    .y(d => y(d.value));
 
 d3.json("data/example.json").then((data) => {
     // Data cleaning
@@ -57,14 +55,20 @@ d3.json("data/example.json").then((data) => {
     });
 
     // Set scale domains
-    // TODO: set domain of axes
+    x.domain(d3.extent(data, d => d.year));
+    y.domain([770000, 785000]);
 
     // Generate axes once scales have been set
-    xAxis.call(xAxisCall.scale(x))
-    yAxis.call(yAxisCall.scale(y))
+    xAxis.call(xAxisCall.scale(x));
+    yAxis.call(yAxisCall.scale(y));
 
     // Add line to chart
-    // TODO: add line path
+    g.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "#9A9A9A")
+        .attr("stroke-width", "2px")
+        .attr("d", line);
 
     /******************************** Tooltip Code ********************************/
 
@@ -111,4 +115,3 @@ d3.json("data/example.json").then((data) => {
     /******************************** Tooltip Code ********************************/
 
 });
-

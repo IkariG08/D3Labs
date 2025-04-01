@@ -7,11 +7,10 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50},
     height = 400 - margin.top - margin.bottom;
     
 var svg = d3.select("#chart-area").append("svg")
-	.attr("width", width + margin.left + margin.right)
+    .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
 var g = svg.append("g")
-    .attr("transform", "translate(" + margin.left + 
-    	"," + margin.top + ")");
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 // Time parser for x-scale
 var parseTime = d3.timeParse("%d-%b-%y");
@@ -25,18 +24,21 @@ var xAxisCall = d3.axisBottom();
 var yAxisCall = d3.axisLeft();
 
 // Area generator
-// TODO create the area generator
+var area = d3.area()
+    .x(d => x(d.date))
+    .y0(height)
+    .y1(d => y(d.close));
 
 // Axis groups
 var xAxis = g.append("g")
-	.attr("class", "x axis")
+    .attr("class", "x axis")
     .attr("transform", "translate(0," + height + ")");
 var yAxis =  g.append("g")
-	.attr("class", "y axis");
+    .attr("class", "y axis");
         
 // Y-Axis label
 yAxis.append("text")
-	.attr("class", "axis-title")
+    .attr("class", "axis-title")
     .attr("fill", "#000")
     .attr("transform", "rotate(-90)")
     .attr("y", 6)
@@ -45,21 +47,23 @@ yAxis.append("text")
     .text("Price ($)");
 
 d3.tsv("data/area.tsv").then((data) => {
+    data.forEach((d) => {
+        d.date = parseTime(d.date);
+        d.close = +d.close;
+    }); 
 
-	data.forEach((d) => {
-	    d.date = parseTime(d.date);
-	    d.close = +d.close;
-	}); 
-
-    x.domain(d3.extent(data, (d) => { return d.date; }));
-    y.domain([0, d3.max(data, (d) => { return d.close; })]);
+    x.domain(d3.extent(data, d => d.date));
+    y.domain([0, d3.max(data, d => d.close)]);
 
     // Generate axes once scales have been set
     xAxis.call(xAxisCall.scale(x))
     yAxis.call(yAxisCall.scale(y))
 
     // Add area chart
-    // TODO add the area path to the visualization
+    g.append("path")
+        .datum(data)
+        .attr("fill", "steelblue")
+        .attr("d", area);
    
 }).catch((error) => {
     console.log(error);
