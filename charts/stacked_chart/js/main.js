@@ -13,27 +13,27 @@ var svg = d3.select("#chart-area").append("svg")
 var g = svg.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-// Time parser for x-scale
+
 var parseDate = d3.timeParse('%Y');
 var formatNumber = d3.format(".1f"),
     formatBillion = (x) => formatNumber(x / 1e9);
 
-// Scales
+
 var x = d3.scaleTime().rangeRound([0, width]);
 var y = d3.scaleLinear().rangeRound([height, 0]);
 var color = d3.scaleOrdinal(d3.schemeSpectral[11]);
 
-// Axis generators
+
 var xAxisCall = d3.axisBottom();
 var yAxisCall = d3.axisLeft().tickFormat(formatBillion);
 
-// Area generator
+
 var area = d3.area()
     .x(d => x(d.data.date))
     .y0(d => y(d[0]))
     .y1(d => y(d[1]));
 
-// Axis groups
+
 var xAxis = g.append("g")
     .attr("class", "x axis")
     .attr("transform", "translate(0," + height + ")");
@@ -41,7 +41,7 @@ var xAxis = g.append("g")
 var yAxis = g.append("g")
     .attr("class", "y axis");
 
-// Y-Axis label
+
 yAxis.append("text")
     .attr("class", "axis-title")
     .attr("fill", "#000")
@@ -51,7 +51,7 @@ yAxis.append("text")
     .attr("text-anchor", "end")
     .text("Billions of liters");
 
-// Legend group
+
 var legend = g.append("g")
     .attr("transform", "translate(" + (width + 150) + "," + (height - 210) + ")");
 
@@ -87,7 +87,7 @@ d3.csv('data/stacked_area2.csv').then((data) => {
         .attr("d", area)
         .style("fill", d => color(d.key));
     
-    // Create legend
+   
     var legendItem = legend.selectAll(".legendItem")
         .data(keys)
         .enter().append("g")

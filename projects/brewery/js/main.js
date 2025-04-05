@@ -9,7 +9,7 @@ var svg = d3.select("#chart-area")
     .append("g")
     .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
 
-// Load the data
+
  d3.json("data/revenues.json").then(function(data) {
     data.forEach(d => {
         d.revenue = +d.revenue;

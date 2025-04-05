@@ -1,9 +1,8 @@
-// Set up margins and dimensions
 var margin = { top: 50, right: 200, bottom: 50, left: 100 },
     width = 1000 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
-// Create the UI controls
+
 var controls = d3.select("#chart-area").append("div").attr("id", "controls");
 
 controls.append("button").attr("id", "play-button").text("Play");
@@ -16,13 +15,9 @@ controls.append("input")
     .attr("min", 1800)
     .attr("max", 2020)
     .attr("step", 1);
-controls.append("select").attr("id", "continent-filter")
-    .selectAll("option")
-    .data(["All", "Asia", "Europe", "Africa", "Americas"])
-    .enter().append("option")
-    .text(d => d);
+controls.append("select").attr("id", "continent-filter");
 
-// Append SVG and center it
+
 var svg = d3.select("#chart-area")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -52,27 +47,58 @@ svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr(
 // Year label
 var yearLabel = svg.append("text").attr("x", width + 100).attr("y", height - 20).attr("text-anchor", "end").attr("font-size", "40px").attr("fill", "gray");
 
-// Load and process data
 d3.json("data/data.json").then(data => {
     var formattedData = data.map(year => {
         return {
             year: year.year,
-            countries: year.countries.filter(c => c.income && c.life_exp)
+            countries: year.countries.filter(c => c.income && c.life_exp && c.continent)
         };
     });
 
+
+    const allContinents = Array.from(new Set(formattedData.flatMap(d => d.countries.map(c => c.continent)))).sort();
+
+
+    const dropdown = d3.select("#continent-filter");
+    dropdown.append("option").text("All").attr("value", "All");
+    dropdown.selectAll("option.continent")
+        .data(allContinents)
+        .enter()
+        .append("option")
+        .attr("class", "continent")
+        .attr("value", d => d)
+        .text(d => d);
+
     let yearIndex = 0;
     let interval;
+
     function update(dataForYear) {
+        const selectedContinent = d3.select("#continent-filter").property("value");
+        let countries = dataForYear.countries;
+
+        if (selectedContinent !== "All") {
+            countries = countries.filter(d => d.continent === selectedContinent);
+        }
+
         yearLabel.text(dataForYear.year);
         d3.select("#year-slider").property("value", dataForYear.year);
         d3.select("#year-value").text(dataForYear.year);
-        var circles = svg.selectAll("circle").data(dataForYear.countries, d => d.country);
+
+        const circles = svg.selectAll("circle").data(countries, d => d.country);
+
         circles.exit().transition().attr("r", 0).remove();
+
         circles.enter().append("circle")
             .attr("fill", d => color(d.continent))
+            .attr("cx", d => x(d.income))
+            .attr("cy", d => y(d.life_exp))
+            .attr("r", 0)
             .merge(circles)
-            .transition().attr("cx", d => x(d.income)).attr("cy", d => y(d.life_exp)).attr("r", d => Math.sqrt(area(d.population) / Math.PI));
+            .transition()
+            .duration(300)
+            .attr("cx", d => x(d.income))
+            .attr("cy", d => y(d.life_exp))
+            .attr("r", d => Math.sqrt(area(d.population) / Math.PI));
     }
 
     function step() {
@@ -104,5 +130,32 @@ d3.json("data/data.json").then(data => {
         update(formattedData[yearIndex]);
     });
 
+    d3.select("#continent-filter").on("change", function() {
+        update(formattedData[yearIndex]);
+    });
+
     update(formattedData[0]);
+
+        // Leyenda (legend)
+    var legend = svg.append("g")
+    .attr("transform", `translate(${width + 40}, 20)`);
+
+    allContinents.forEach((continent, i) => {
+    const legendRow = legend.append("g")
+        .attr("transform", `translate(0, ${i * 25})`);
+
+    legendRow.append("rect")
+        .attr("width", 20)
+        .attr("height", 20)
+        .attr("fill", color(continent));
+
+    legendRow.append("text")
+        .attr("x", 30)
+        .attr("y", 15)
+        .attr("text-anchor", "start")
+        .style("text-transform", "capitalize")
+        .text(continent);
+    });
+
+    
 });
